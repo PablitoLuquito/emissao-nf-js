@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang='pt-BR'>
+
+<head>
+  <meta charset='UTF-8'>
+  <meta http-equiv='X-UA-Compatible' content='IE=edge'>
+  <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+  <link rel='stylesheet' href='./src/css/style.css'>
+  <title>Emissão de NF</title>
+</head>
+
+<body>
+  <main>
+    <h1>Emissão de NF</h1>
+    <form>
+      <h2>Dados do Paciente</h2>
+      <div class="paciente-container">
+        <div class="nome-paciente">
+          <label>Nome do Paciente</label>
+          <input type="text" id="nome-paciente" autofocus>
+          <span id="msg" class="error-msg"></span>
+        </div>
+        <div class="cpf-paciente">
+          <label>CPF do Paciente</label>
+          <input type="text" id="cpf-paciente" maxlength="11">
+          <span id="msg" class="error-msg"></span>
+        </div>
+      </div>
+
+      <h2>Dados de quem será emitida a NF</h2>
+      <div class="emissor-container">
+        <div class="nome-emissor">
+          <label>Nome do Emissor</label>
+          <input type="text" id="nome-emissor">
+          <span id="msg" class="error-msg"></span>
+        </div>
+        <div class="cpf-emissor">
+          <label>CPF do Emissor</label>
+          <input type="text" id="cpf-emissor" maxlength="11">
+          <span id="msg" class="error-msg"></span>
+        </div>
+      </div>
+      <div class="email-tel">
+        <div>
+          <label>E-mail</label>
+          <input type="email" id="email">
+          <span id="msg" class="error-msg"></span>
+        </div>
+        <div>
+          <label>Telefone</label>
+          <input type="tel" id="tel" maxlength="15">
+          <span id="msg" class="error-msg"></span>
+        </div>
+      </div>
+      <div class="endereco-container">
+        <div class="cep">
+          <label>CEP</label>
+          <input type="text" id="cep">
+        </div>
+        <div class="endereco">
+          <label>Endereço</label>
+          <input type="text" id="endereco">
+        </div>
+        <div class="numero">
+          <label>Número</label>
+          <input type="text" id="numero">
+        </div>
+        <div class="complemento">
+          <label>Complemento</label>
+          <input type="text" id="complemento">
+        </div>
+      </div>
+
+      <button id="imprimir">Imprimir NF</button>
+    </form>
+  </main>
+
+  <script src='./src/js/main.js'></script>
+</body>
+
+</html>
