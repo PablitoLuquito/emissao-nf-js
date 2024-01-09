@@ -36,8 +36,24 @@ form input {
   font-size: 1.2em;
 }
 
+footer {
+  padding: 20px;
+}
+
 .print {
   grid-column: 1 / -1;
+  height: 50px;
+  font-size: 1.5rem;
+  font-weight: 700;
+  background-color: #ff6600;
+  color: white;
+  border: none;
+  outline: none;
+  cursor: pointer;
+}
+
+.print:hover {
+  background-color: #e65c00;
 }
 
 .label {

@@ -2,6 +2,9 @@ class ValidateForm {
   constructor() {
     this.form = document.querySelector(".form");
     this.modal = document.querySelector("dialog");
+    this.main = document.querySelector("main");
+    this.cep = document.querySelector("#cep");
+    this.endereco = document.querySelector("#endereco");
     this.events();
   }
 
@@ -19,8 +22,26 @@ class ValidateForm {
         input.addEventListener("input", () => this.formatTel(input));
       }
 
+      let timeoutId;
+
       if (input.id === "cep") {
-        input.addEventListener("input", () => this.formatCep(input));
+        input.addEventListener("input", () => {
+          clearTimeout(timeoutId);
+          timeoutId = setTimeout(this.handleCepAPI, 500);
+          this.formatCep(input);
+        });
+      }
+    });
+
+    this.modal.addEventListener("click", (event) => {
+      const dialogDimensions = this.modal.getBoundingClientRect();
+      if (
+        event.clientX < dialogDimensions.left ||
+        event.clientX > dialogDimensions.right ||
+        event.clientY < dialogDimensions.top ||
+        event.clientY > dialogDimensions.bottom
+      ) {
+        this.modal.close();
       }
     });
   }
@@ -30,36 +51,56 @@ class ValidateForm {
     const validInputs = this.inputIsValid();
 
     if (validInputs) {
-      const data = new Object();
-      this.form.querySelectorAll("input").forEach((input) => {
-        data[input.placeholder] = input.value.trim();
-      });
-
-      const dataJSON = JSON.stringify(data);
-      localStorage.setItem("printData", dataJSON);
-
-      const main = document.querySelector("main");
-      main.innerHTML = "";
-      const h1 = document.createElement("h1");
-      h1.innerText = "Emissão de NF";
-      main.appendChild(h1);
-      const printData = localStorage.getItem("printData");
-      const printDataObject = JSON.parse(printData);
-      for (let data in printDataObject) {
-        const div = document.createElement("div");
-        if (data === "E-mail") {
-          div.innerHTML = `<span class="label">${data}: </span><span class="data">${printDataObject[data]}</span>`;
-        } else {
-          div.innerHTML = `<span class="label">${data}: </span><span class="data">${this.capitalize(
-            printDataObject[data]
-          )}</span>`;
-        }
-        main.appendChild(div);
-      }
-      main.classList.add("printPage");
+      this.printPage();
+      this.main.classList.add("printPage");
       window.print();
     } else {
       this.modal.showModal();
+    }
+  }
+
+  async handleCepAPI() {
+    try {
+      const cep = this.cep.value.replace(/\D+/g, "");
+      const href = `https://brasilapi.com.br/api/cep/v1/${cep}`;
+      const response = await fetch(href);
+
+      if (response.status < 200 || response.status > 300) return;
+
+      const cepData = await response.text();
+      const cepDataObject = JSON.parse(cepData);
+      this.endereco.value = `${cepDataObject.street}, ${cepDataObject.neighborhood}, ${cepDataObject.city} - ${cepDataObject.state}`;
+    } catch (e) {
+      return;
+    }
+  }
+
+  printPage() {
+    const data = new Object();
+    this.form.querySelectorAll("input").forEach((input) => {
+      data[input.placeholder] = input.value.trim();
+    });
+
+    const dataJSON = JSON.stringify(data);
+    localStorage.setItem("printData", dataJSON);
+
+    this.main.innerHTML = "";
+    const h1 = document.createElement("h1");
+    h1.innerText = "Emissão de NF";
+    this.main.appendChild(h1);
+
+    const printData = localStorage.getItem("printData");
+    const printDataObject = JSON.parse(printData);
+    for (let data in printDataObject) {
+      const div = document.createElement("div");
+      if (data === "E-mail") {
+        div.innerHTML = `<span class="label">${data}: </span><span class="data">${printDataObject[data]}</span>`;
+      } else {
+        div.innerHTML = `<span class="label">${data}: </span><span class="data">${this.capitalize(
+          printDataObject[data]
+        )}</span>`;
+      }
+      this.main.appendChild(div);
     }
   }
 
