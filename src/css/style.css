@@ -1,6 +1,6 @@
 @import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap");
 
-* {
+* :not(dialog) {
   padding: 0;
   margin: 0;
   outline: none;
@@ -8,76 +8,45 @@
 }
 
 body {
-  width: 100vw;
   height: 100vh;
   font-family: "Poppins", sans-serif;
   font-size: 1.2em;
 }
 
 main {
+  display: flex;
+  flex-direction: column;
   height: 100%;
   justify-content: center;
   align-items: center;
 }
 
 form {
-  width: 75%;
-  row-gap: 10px;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  width: 50%;
+  gap: 10px;
+}
+
+form > h2 {
+  grid-column: 1 / -1;
 }
 
 form input {
   font-size: 1.2em;
 }
 
-.error-msg {
-  color: red;
+.print {
+  grid-column: 1 / -1;
+}
+
+.label {
   font-weight: 700;
-  font-size: small;
+  text-transform: uppercase;
 }
 
-.cep {
-  width: 15%;
-}
-
-.numero {
-  width: 10%;
-}
-
-.paciente-container,
-.emissor-container,
-.endereco-container,
-.email-tel {
-  display: flex;
-  column-gap: 10px;
-}
-
-main,
-.paciente-container,
-.emissor-container,
-.endereco-container,
-.email-tel,
-.email-tel > div,
-.email-tel > div > input,
-.endereco,
-.complemento,
-.nome-paciente,
-.cpf-paciente,
-.nome-emissor,
-.cpf-emissor {
-  width: 100%;
-}
-
-main,
-form,
-.cep,
-.endereco,
-.numero,
-.complemento,
-.nome-paciente,
-.cpf-paciente,
-.nome-emissor,
-.cpf-emissor,
-.email-tel > div {
-  display: flex;
-  flex-direction: column;
+.printPage {
+  align-items: start;
+  row-gap: 20px;
+  padding: 50px;
 }

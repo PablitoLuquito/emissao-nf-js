@@ -1,181 +1,197 @@
-const nomePaciente = document.querySelector("#nome-paciente");
-const cpfPaciente = document.querySelector("#cpf-paciente");
-const nomeEmissor = document.querySelector("#nome-emissor");
-const cpfEmissor = document.querySelector("#cpf-emissor");
-const email = document.querySelector("#email");
-const tel = document.querySelector("#tel");
-const cep = document.querySelector("#cep");
-const endereco = document.querySelector("#endereco");
-const numero = document.querySelector("#numero");
-const complemento = document.querySelector("#complemento");
-const form = document.querySelector("form");
-const errorMsg = document.querySelectorAll("#msg");
-const dadosNf = {
-  nomePaciente: "",
-  cpfPaciente: "",
-  nomeEmissor: "",
-  cpfEmissor: "",
-  email: "",
-  tel: "",
-  cep: "",
-  endereco: "",
-  numero: "",
-  complemento: "",
-};
+class ValidateForm {
+  constructor() {
+    this.form = document.querySelector(".form");
+    this.modal = document.querySelector("dialog");
+    this.events();
+  }
 
-form.addEventListener("submit", (event) => {
-  event.preventDefault();
+  events() {
+    this.form.addEventListener("submit", (event) => {
+      this.handleSubmit(event);
+    });
 
-  validarCampos();
-  console.log(dadosNf);
-});
-
-function validarCampos() {
-  if (
-    !nomePaciente.value ||
-    !cpfPaciente.value ||
-    !nomeEmissor.value ||
-    !cpfEmissor.value
-  ) {
-    errorMsg.forEach((msg) => {
-      if (!msg.previousElementSibling.value) {
-        msg.innerText = "Este campo deve ser preenchido!";
+    this.form.querySelectorAll(".format").forEach((input) => {
+      if (input.id === "cpf-paciente" || input.id === "cpf-emissor") {
+        input.addEventListener("input", () => this.formatCpf(input));
       }
 
-      if (msg.previousElementSibling.value) {
-        msg.innerText = "";
+      if (input.id === "tel") {
+        input.addEventListener("input", () => this.formatTel(input));
+      }
+
+      if (input.id === "cep") {
+        input.addEventListener("input", () => this.formatCep(input));
       }
     });
   }
 
-  if (validarCpf(cpfPaciente.value)) {
-    errorMsg.forEach((msg) => {
-      if (msg.previousElementSibling.id === "cpf-paciente") {
-        msg.innerText = "";
-        dadosNf.cpfPaciente = cpfPaciente.value;
+  handleSubmit(event) {
+    event.preventDefault();
+    const validInputs = this.inputIsValid();
+
+    if (validInputs) {
+      const data = new Object();
+      this.form.querySelectorAll("input").forEach((input) => {
+        data[input.placeholder] = input.value.trim();
+      });
+
+      const dataJSON = JSON.stringify(data);
+      localStorage.setItem("printData", dataJSON);
+
+      const main = document.querySelector("main");
+      main.innerHTML = "";
+      const h1 = document.createElement("h1");
+      h1.innerText = "Emissão de NF";
+      main.appendChild(h1);
+      const printData = localStorage.getItem("printData");
+      const printDataObject = JSON.parse(printData);
+      for (let data in printDataObject) {
+        const div = document.createElement("div");
+        if (data === "E-mail") {
+          div.innerHTML = `<span class="label">${data}: </span><span class="data">${printDataObject[data]}</span>`;
+        } else {
+          div.innerHTML = `<span class="label">${data}: </span><span class="data">${this.capitalize(
+            printDataObject[data]
+          )}</span>`;
+        }
+        main.appendChild(div);
       }
-    });
-  } else {
-    errorMsg.forEach((msg) => {
-      if (msg.previousElementSibling.id === "cpf-paciente") {
-        msg.innerText = "CPF inválido!";
+      main.classList.add("printPage");
+      window.print();
+    } else {
+      this.modal.showModal();
+    }
+  }
+
+  inputIsValid() {
+    let valid = true;
+    let NoEmailOrTel = false;
+
+    for (let errorText of this.modal.querySelectorAll(".error-text")) {
+      errorText.remove();
+    }
+
+    for (let input of this.form.querySelectorAll(".validate")) {
+      const placeholder = input.placeholder;
+      if (!input.value) {
+        if (input.id === "email" || input.id === "tel") {
+          NoEmailOrTel = true;
+        } else {
+          this.getError(`O campo "${placeholder}" não pode estar vazio.`);
+          valid = false;
+        }
       }
-    });
-  }
 
-  if (validarCpf(cpfEmissor.value)) {
-    errorMsg.forEach((msg) => {
-      if (msg.previousElementSibling.id === "cpf-emissor") {
-        msg.innerText = "";
-        dadosNf.cpfEmissor = cpfEmissor.value;
+      if (input.id === "cpf-paciente") {
+        if (!this.validateCpf(input.value)) {
+          this.getError(`${placeholder} inválido!`);
+          valid = false;
+        }
       }
-    });
-  } else {
-    errorMsg.forEach((msg) => {
-      if (msg.previousElementSibling.id === "cpf-emissor") {
-        msg.innerText = "CPF inválido!";
+
+      if (input.id === "cpf-emissor") {
+        if (!this.validateCpf(input.value)) {
+          this.getError(`${placeholder} inválido!`);
+          valid = false;
+        }
       }
-    });
+    }
+
+    const email = this.form.querySelector("#email");
+    if (!this.validateEmail(email.value)) {
+      this.getError(`${email.placeholder} inválido!`);
+    }
+
+    const tel = this.form.querySelector("#tel");
+    if (!this.validateTel(tel)) {
+      this.getError(`${tel.placeholder} inválido!`);
+    }
+
+    if (!email.value && !tel.value) {
+      this.getError("Ao menos uma forma de contato deve ser enviada.");
+    }
+
+    return valid;
   }
 
-  if (validarEmail(email.value)) {
-    errorMsg.forEach((msg) => {
-      if (msg.previousElementSibling.id === "email") {
-        msg.innerText = "";
-        dadosNf.email = email.value;
-      }
-    });
-  } else {
-    errorMsg.forEach((msg) => {
-      if (msg.previousElementSibling.id === "email") {
-        msg.innerText = "E-mail inválido!";
-      }
-    });
+  formatTel(tel) {
+    const numbers = tel.value.replace(/\D+/g, "");
+    const regex = /^(\d{2})(\d{4,5})(\d{4})$/;
+    const resolve = numbers.replace(regex, "($1)$2-$3");
+
+    tel.value = resolve;
   }
 
-  dadosNf.nomePaciente = nomePaciente.value;
-  dadosNf.nomeEmissor = nomeEmissor.value;
-  dadosNf.tel = tel.value;
-  dadosNf.cep = cep.value;
-  dadosNf.endereco = endereco.value;
-  dadosNf.numero = numero.value;
-  dadosNf.complemento = complemento.value;
-}
+  formatCep(cep) {
+    const numbers = cep.value.replace(/\D+/g, "");
+    const regex = /^(\d{5})(\d{3})$/;
+    const resolve = numbers.replace(regex, "$1-$2");
 
-function validarEmail(email) {
-  const regexEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return regexEmail.test(email);
-}
-
-function validarCpf(cpf) {
-  cpf = cpf.replace(/\D/g, "");
-
-  if (cpf.length !== 11 || /^(.)\1+$/.test(cpf)) {
-    return false;
+    cep.value = resolve;
   }
 
-  let soma = 0;
-  for (let i = 0; i < 9; i++) {
-    soma += parseInt(cpf.charAt(i) * (10 - i));
-  }
-  let primeiroDigito = 11 - (soma % 11);
-  if (primeiroDigito > 9) {
-    primeiroDigito = 0;
-  }
+  formatCpf(cpf) {
+    const numbers = cpf.value.replace(/\D+/g, "");
+    const regex = /^(\d{3})(\d{3})(\d{3})(\d{2})$/;
+    const resolve = numbers.replace(regex, "$1.$2.$3-$4");
 
-  soma = 0;
-  for (let i = 0; i < 10; i++) {
-    soma += parseInt(cpf.charAt(i) * (11 - i));
-  }
-  let segundoDigito = 11 - (soma % 11);
-  if (segundoDigito > 9) {
-    segundoDigito = 0;
+    cpf.value = resolve;
   }
 
-  return (
-    parseInt(cpf.charAt(9)) === primeiroDigito &&
-    parseInt(cpf.charAt(10)) === segundoDigito
-  );
+  getError(msg) {
+    const p = document.createElement("p");
+    p.innerText = msg;
+    p.classList.add("error-text");
+    this.modal.appendChild(p);
+  }
+
+  validateTel(tel) {
+    const onlyDigitTel = tel.value.replace(/\D+/g, "");
+    if (onlyDigitTel.length < 10) {
+      return false;
+    }
+    return true;
+  }
+
+  validateCpf(cpf) {
+    cpf = cpf.replace(/\D+/g, "");
+
+    if (cpf.length !== 11 || /^(.)\1+$/.test(cpf)) {
+      return false;
+    }
+
+    let sum = 0;
+    for (let i = 0; i < 9; i++) {
+      sum += parseInt(cpf.charAt(i) * (10 - i));
+    }
+    let firstDigit = 11 - (sum % 11);
+    if (firstDigit > 9) {
+      firstDigit = 0;
+    }
+
+    sum = 0;
+    for (let i = 0; i < 10; i++) {
+      sum += parseInt(cpf.charAt(i) * (11 - i));
+    }
+    let secondDigit = 11 - (sum % 11);
+    if (secondDigit > 9) {
+      secondDigit = 0;
+    }
+
+    return (
+      parseInt(cpf.charAt(9)) === firstDigit &&
+      parseInt(cpf.charAt(10)) === secondDigit
+    );
+  }
+
+  validateEmail(email) {
+    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return regex.test(email);
+  }
+
+  capitalize(string) {
+    return string.replace(/\b\w/g, (match) => match.toUpperCase());
+  }
 }
 
-function atualizarMascaraCpfPaciente() {
-  const cpfDigitado = cpfPaciente.value;
-  const cpfFormatado = formatarCpf(cpfDigitado);
-  cpfPaciente.value = cpfFormatado;
-}
-
-function atualizarMascaraCpfEmissor() {
-  const cpfDigitado = cpfEmissor.value;
-  const cpfFormatado = formatarCpf(cpfDigitado);
-  cpfEmissor.value = cpfFormatado;
-}
-
-function formatarCpf(cpf) {
-  const numeros = cpf.replace(/\D/g, "");
-  const regex = /^(\d{3})(\d{3})(\d{3})(\d{2})$/;
-  const resultado = numeros.replace(regex, "$1.$2.$3-$4");
-
-  return resultado;
-}
-
-function atualizarMascaraTel() {
-  const telefoneDigitado = tel.value;
-  const telefoneFormatado = formatarTelefone(telefoneDigitado);
-  tel.value = telefoneFormatado;
-}
-
-function formatarTelefone(telefone) {
-  const numeros = telefone.replace(/\D/g, "");
-  const regex = /^(\d{2})(\d{4,5})(\d{4})$/;
-  const resultado = numeros.replace(regex, "($1) $2-$3");
-
-  return resultado;
-}
-
-document.querySelector("#tel").addEventListener("input", atualizarMascaraTel);
-document
-  .querySelector("#cpf-paciente")
-  .addEventListener("input", atualizarMascaraCpfPaciente);
-document
-  .querySelector("#cpf-emissor")
-  .addEventListener("input", atualizarMascaraCpfEmissor);
+const validate = new ValidateForm();
