@@ -88,7 +88,7 @@ class ValidateForm {
       const daysArray = [
         "Domingo",
         "Segunda-Feira",
-        "Treça-Feira",
+        "Terça-Feira",
         "Quarta-Feira",
         "Sexta-Feira",
         "Sábado",
