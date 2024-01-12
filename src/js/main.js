@@ -27,10 +27,14 @@ class ValidateForm {
       if (input.id === "cep") {
         input.addEventListener("input", () => {
           clearTimeout(timeoutId);
-          timeoutId = setTimeout(this.handleCepAPI, 500);
+          timeoutId = setTimeout(this.handleCepAPI, 250);
           this.formatCep(input);
         });
       }
+
+      window.addEventListener("beforeunload", () => {
+        localStorage.clear();
+      });
     });
 
     this.modal.addEventListener("click", (event) => {
@@ -75,6 +79,36 @@ class ValidateForm {
     }
   }
 
+  handleDate() {
+    function leftyZero(number) {
+      return number >= 10 ? number : `0${number}`;
+    }
+
+    function formatDate(date) {
+      const daysArray = [
+        "Domingo",
+        "Segunda-Feira",
+        "Treça-Feira",
+        "Quarta-Feira",
+        "Sexta-Feira",
+        "Sábado",
+      ];
+
+      const weekDay = daysArray[date.getDay()];
+      const day = leftyZero(date.getDate());
+      const month = leftyZero(date.getMonth() + 1);
+      const year = leftyZero(date.getFullYear());
+      const hours = leftyZero(date.getHours());
+      const minutes = leftyZero(date.getMinutes());
+
+      return `${weekDay} - ${day}/${month}/${year} ${hours}:${minutes}`;
+    }
+
+    const date = new Date();
+    const outputDate = formatDate(date);
+    return outputDate;
+  }
+
   printPage() {
     const data = new Object();
     this.form.querySelectorAll("input").forEach((input) => {
@@ -94,7 +128,9 @@ class ValidateForm {
     for (let data in printDataObject) {
       const div = document.createElement("div");
       if (data === "E-mail") {
-        div.innerHTML = `<span class="label">${data}: </span><span class="data">${printDataObject[data]}</span>`;
+        div.innerHTML = `<span class="label">${data}: </span><span class="data">${printDataObject[
+          data
+        ].toLowerCase()}</span>`;
       } else {
         div.innerHTML = `<span class="label">${data}: </span><span class="data">${this.capitalize(
           printDataObject[data]
@@ -102,11 +138,13 @@ class ValidateForm {
       }
       this.main.appendChild(div);
     }
+    const dateDiv = document.createElement("div");
+    dateDiv.innerHTML = `<span class="label">Data: </span><span class="data">${this.handleDate()}</span>`;
+    this.main.appendChild(dateDiv);
   }
 
   inputIsValid() {
     let valid = true;
-    let NoEmailOrTel = false;
 
     for (let errorText of this.modal.querySelectorAll(".error-text")) {
       errorText.remove();
@@ -115,12 +153,8 @@ class ValidateForm {
     for (let input of this.form.querySelectorAll(".validate")) {
       const placeholder = input.placeholder;
       if (!input.value) {
-        if (input.id === "email" || input.id === "tel") {
-          NoEmailOrTel = true;
-        } else {
-          this.getError(`O campo "${placeholder}" não pode estar vazio.`);
-          valid = false;
-        }
+        this.getError(`O campo "${placeholder}" não pode estar vazio.`);
+        valid = false;
       }
 
       if (input.id === "cpf-paciente") {
@@ -231,7 +265,13 @@ class ValidateForm {
   }
 
   capitalize(string) {
-    return string.replace(/\b\w/g, (match) => match.toUpperCase());
+    const words = string.toLowerCase().split(" ");
+
+    for (let i = 0; i < words.length; i++) {
+      words[i] = words[i][0].toUpperCase() + words[i].substring(1);
+    }
+
+    return String(words.join(" "));
   }
 }
 

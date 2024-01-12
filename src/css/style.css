@@ -64,5 +64,5 @@ footer {
 .printPage {
   align-items: start;
   row-gap: 20px;
-  padding: 50px;
+  padding-left: 30px;
 }
