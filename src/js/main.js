@@ -31,10 +31,6 @@ class ValidateForm {
           this.formatCep(input);
         });
       }
-
-      window.addEventListener("beforeunload", () => {
-        localStorage.clear();
-      });
     });
 
     this.modal.addEventListener("click", (event) => {
@@ -90,6 +86,7 @@ class ValidateForm {
         "Segunda-Feira",
         "Terça-Feira",
         "Quarta-Feira",
+        "Quinta-Feira",
         "Sexta-Feira",
         "Sábado",
       ];
@@ -101,7 +98,7 @@ class ValidateForm {
       const hours = leftyZero(date.getHours());
       const minutes = leftyZero(date.getMinutes());
 
-      return `${weekDay} - ${day}/${month}/${year} ${hours}:${minutes}`;
+      return `${weekDay} - ${day}/${month}/${year} - ${hours}:${minutes}`;
     }
 
     const date = new Date();
@@ -131,12 +128,31 @@ class ValidateForm {
         div.innerHTML = `<span class="label">${data}: </span><span class="data">${printDataObject[
           data
         ].toLowerCase()}</span>`;
+      } else if (printDataObject[data] === "") {
+        continue;
       } else {
-        div.innerHTML = `<span class="label">${data}: </span><span class="data">${this.capitalize(
-          printDataObject[data]
-        )}</span>`;
+        if (data === "Endereço" && printDataObject[data] !== "") {
+          if (printDataObject["Complemento"] !== "") {
+            const splitData = printDataObject[data].split(",");
+            splitData.splice(1, 0, ` ${printDataObject["Complemento"]}`);
+            printDataObject[data] = splitData.join(",");
+          }
+          if (printDataObject["Número"] !== "") {
+            const splitData = printDataObject[data].split(",");
+            splitData.splice(1, 0, ` ${printDataObject["Número"]}`);
+            printDataObject[data] = splitData.join(",");
+          }
+        }
+        if (data === "Número" || data === "Complemento") {
+          continue;
+        } else {
+          div.innerHTML = `<span class="label">${data}: </span><span class="data">${this.capitalize(
+            printDataObject[data]
+          )}</span>`;
+        }
       }
       this.main.appendChild(div);
+      localStorage.clear();
     }
     const dateDiv = document.createElement("div");
     dateDiv.innerHTML = `<span class="label">Data: </span><span class="data">${this.handleDate()}</span>`;
@@ -153,8 +169,15 @@ class ValidateForm {
     for (let input of this.form.querySelectorAll(".validate")) {
       const placeholder = input.placeholder;
       if (!input.value) {
-        this.getError(`O campo "${placeholder}" não pode estar vazio.`);
-        valid = false;
+        if (
+          input.placeholder === "E-mail" ||
+          input.placeholder === "Telefone"
+        ) {
+          continue;
+        } else {
+          this.getError(`O campo "${placeholder}" não pode estar vazio.`);
+          valid = false;
+        }
       }
 
       if (input.id === "cpf-paciente") {
@@ -221,11 +244,24 @@ class ValidateForm {
   }
 
   validateTel(tel) {
-    const onlyDigitTel = tel.value.replace(/\D+/g, "");
-    if (onlyDigitTel.length < 10) {
-      return false;
+    if (!tel.value) {
+      return true;
+    } else {
+      const onlyDigitTel = tel.value.replace(/\D+/g, "");
+      if (onlyDigitTel.length < 10) {
+        return false;
+      }
+      return true;
     }
-    return true;
+  }
+
+  validateEmail(email) {
+    if (!email.value) {
+      return true;
+    } else {
+      const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      return regex.test(email);
+    }
   }
 
   validateCpf(cpf) {
@@ -257,11 +293,6 @@ class ValidateForm {
       parseInt(cpf.charAt(9)) === firstDigit &&
       parseInt(cpf.charAt(10)) === secondDigit
     );
-  }
-
-  validateEmail(email) {
-    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return regex.test(email);
   }
 
   capitalize(string) {
